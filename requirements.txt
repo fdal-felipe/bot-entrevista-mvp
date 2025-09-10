@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+celery[redis]
+twilio
+redis
+google-cloud-aiplatform
+google-cloud-speech
+requests
+google-auth
+python-dotenv
