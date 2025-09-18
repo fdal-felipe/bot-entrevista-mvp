@@ -8,3 +8,4 @@ google-cloud-speech
 requests
 google-auth
 python-dotenv
+python-json-logger

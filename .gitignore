@@ -1,3 +1,4 @@
 .env
 venv
 google_credentials.json
+logs.jsonl
