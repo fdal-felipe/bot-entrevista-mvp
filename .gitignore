@@ -2,3 +2,4 @@
 venv
 google_credentials.json
 logs.jsonl
+*.jsonl

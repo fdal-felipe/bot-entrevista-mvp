@@ -1,15 +1,27 @@
 import json
 import sys
+import os
+import glob
 from collections import Counter
 
-def analisar_logs(arquivo_logs):
-    """Analisa o arquivo de logs e gera métricas."""
+def analisar_logs(arquivos_ou_pasta):
+    """Analisa arquivos de log e gera métricas."""
     
-    try:
-        with open(arquivo_logs, 'r', encoding='utf-8') as f:
-            linhas = f.readlines()
-    except FileNotFoundError:
-        print(f"❌ Arquivo {arquivo_logs} não encontrado!")
+    arquivos_log = []
+    
+    if os.path.isdir(arquivos_ou_pasta):
+        arquivos_log = glob.glob(os.path.join(arquivos_ou_pasta, "*.jsonl"))
+        print(f"📁 Analisando pasta: {arquivos_ou_pasta}")
+        print(f"📄 Arquivos encontrados: {len(arquivos_log)}")
+    elif os.path.isfile(arquivos_ou_pasta):
+        arquivos_log = [arquivos_ou_pasta]
+        print(f"📄 Analisando arquivo: {arquivos_ou_pasta}")
+    else:
+        print(f"❌ {arquivos_ou_pasta} não encontrado!")
+        return
+    
+    if not arquivos_log:
+        print("❌ Nenhum arquivo .jsonl encontrado!")
         return
     
     metricas = Counter()
@@ -17,32 +29,38 @@ def analisar_logs(arquivo_logs):
     depoimentos = []
     emails = []
     
-    print("🔍 Analisando logs...\n")
+    print("🔍 Processando logs...\n")
     
-    for linha in linhas:
+    for arquivo in arquivos_log:
+        print(f"📖 Lendo: {os.path.basename(arquivo)}")
         try:
-            evento = json.loads(linha.strip())
-            action = evento.get('action', '')
-            user_id = evento.get('user_id', '')
-            
-            if action:
-                metricas[action] += 1
-            
-            if action == 'interview_started' and user_id:
-                usuarios_unicos_entrevista.add(user_id)
-            
-            if action == 'user_feedback_received':
-                depoimento = evento.get('depoimento', '')
-                if depoimento:
-                    depoimentos.append(depoimento)
-            
-            if action == 'pro_email_collected':
-                email = evento.get('email', '')
-                if email:
-                    emails.append(email)
-                    
-        except json.JSONDecodeError:
-            continue
+            with open(arquivo, 'r', encoding='utf-8') as f:
+                for linha in f:
+                    try:
+                        evento = json.loads(linha.strip())
+                        action = evento.get('action', '')
+                        user_id = evento.get('user_id', '')
+                        
+                        if action:
+                            metricas[action] += 1
+                        
+                        if action == 'interview_started' and user_id:
+                            usuarios_unicos_entrevista.add(user_id)
+                        
+                        if action == 'user_feedback_received':
+                            depoimento = evento.get('depoimento', '')
+                            if depoimento:
+                                depoimentos.append(depoimento)
+                        
+                        if action == 'pro_email_collected':
+                            email = evento.get('email', '')
+                            if email:
+                                emails.append(email)
+                                
+                    except json.JSONDecodeError:
+                        continue
+        except FileNotFoundError:
+            print(f"⚠️  Arquivo {arquivo} não encontrado, pulando...")
     
     print("📊 MÉTRICAS DO BOT DE ENTREVISTAS")
     print("=" * 50)
@@ -89,9 +107,5 @@ def analisar_logs(arquivo_logs):
     print(f"\n✅ Análise concluída! Total de eventos processados: {sum(metricas.values())}")
 
 if __name__ == "__main__":
-    arquivo = "logs.jsonl"
-    if len(sys.argv) > 1:
-        arquivo = sys.argv[1]
-    
-    analisar_logs(arquivo)
-    
+    caminho = "logs" if len(sys.argv) == 1 else sys.argv[1]
+    analisar_logs(caminho)
